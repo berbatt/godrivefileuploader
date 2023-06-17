@@ -1,25 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"godrivefileuploader/file_uploader"
+	"godrivefileuploader/file_operations"
 	"log"
 )
 
 const (
-	filename = "temp.txt"
+	pathname = "temp"
 )
 
 func main() {
-	fileUploader, err := file_uploader.NewDefaultDriveUploader()
+	err := file_operations.TraverseThroughDirectoryAndUploadToDrive(pathname)
 	if err != nil {
-		log.Fatal("error while creating new default file uploader")
+		log.Fatalf("error while uploading the path with name: %s", pathname)
 		return
 	}
-	if err = fileUploader.UploadFileFrom(filename); err != nil {
-		log.Fatalf("error while uploading the file with name: %s", filename)
-		return
-	}
-
-	fmt.Printf("File %s uploaded to Google Drive\n", filename)
 }

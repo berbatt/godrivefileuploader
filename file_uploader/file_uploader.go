@@ -30,7 +30,11 @@ func NewDriveUploader(pathCredentialFile string) (FileUploader, error) {
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	c, err := drive.NewService(context.Background(), option.WithHTTPClient(getClientFromConfig(config)))
+	httpClient, err := getClientFromConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	c, err := drive.NewService(context.Background(), option.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, err
 	}

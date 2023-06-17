@@ -7,8 +7,7 @@ import (
 )
 
 const (
-	filename           = "temp.txt"
-	pathCredentialFile = "credentials.json"
+	filename = "temp.txt"
 )
 
 func main() {

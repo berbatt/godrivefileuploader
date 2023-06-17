@@ -3,6 +3,7 @@ module godrivefileuploader
 go 1.18
 
 require (
+	github.com/pkg/errors v0.9.1
 	golang.org/x/oauth2 v0.6.0
 	google.golang.org/api v0.114.0
 )

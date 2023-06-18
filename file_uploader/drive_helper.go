@@ -18,15 +18,9 @@ func getClientFromConfig(config *oauth2.Config, args ...string) (*http.Client, e
 		tokenFile = args[0]
 	}
 
-	tok, err := tokenFromFile(tokenFile)
+	tok, err := TokenFromFile(tokenFile)
 	if err != nil {
-		tok, err = getTokenFromWeb(config)
-		if err != nil {
-			return nil, err
-		}
-		if err = saveToken(tokenFile, tok); err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	return config.Client(context.Background(), tok), nil
 }
@@ -49,8 +43,8 @@ func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 	return tok, nil
 }
 
-// Retrieves a token from a local file.
-func tokenFromFile(file string) (*oauth2.Token, error) {
+// TokenFromFile Retrieves a token from a local file.
+func TokenFromFile(file string) (*oauth2.Token, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err

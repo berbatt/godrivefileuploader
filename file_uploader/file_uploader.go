@@ -3,6 +3,7 @@ package file_uploader
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
@@ -11,6 +12,7 @@ import (
 )
 
 const pathCredentialFile = "credentials.json"
+const folderColorCode = "#00FF00"
 
 var uploader *FileUploader
 
@@ -28,6 +30,8 @@ func GetUploader() (FileUploader, error) {
 type FileUploader interface {
 	UploadFileFrom(input []byte, fileName string, parentID string) error
 	CreateFolder(folderName, parentFolderID string) (string, error)
+	FindFolderOrFile(name, parentFolderID string) (*drive.File, error)
+	CreateOrUpdateIfNeeded(input []byte, name, parentFolderID string) error
 }
 
 type DriveUploader struct {
@@ -81,7 +85,7 @@ func (d *DriveUploader) CreateFolder(folderName, parentFolderID string) (string,
 		Name:           folderName,
 		MimeType:       "application/vnd.google-apps.folder",
 		Parents:        parents,
-		FolderColorRgb: "#00FF00",
+		FolderColorRgb: folderColorCode,
 	}
 
 	createdFolder, err := d.client.Files.Create(folder).Do()
@@ -90,4 +94,23 @@ func (d *DriveUploader) CreateFolder(folderName, parentFolderID string) (string,
 	}
 
 	return createdFolder.Id, nil
+}
+
+func (d *DriveUploader) FindFolderOrFile(name, parentFolderID string) (*drive.File, error) {
+	query := fmt.Sprintf("name = '%s' and '%s' in parents and trashed = false", name, parentFolderID)
+	files, err := d.client.Files.List().Q(query).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to search for folder or file: %w", err)
+	}
+
+	if len(files.Files) > 0 {
+		return files.Files[0], nil
+	}
+
+	return nil, nil
+}
+
+func (d *DriveUploader) CreateOrUpdateIfNeeded(input []byte, name, parentFolderID string) error {
+
+	return nil
 }

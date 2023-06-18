@@ -21,10 +21,10 @@ func ReadFileFromPath(path string) ([]byte, error) {
 }
 
 func TraverseThroughDirectoryAndUploadToDrive(dirPath string) error {
-	return filepath.Walk(dirPath, WalkFunction)
+	return filepath.Walk(dirPath, HandleFileOrFolder)
 }
 
-func WalkFunction(path string, info fs.FileInfo, err error) error {
+func HandleFileOrFolder(path string, info fs.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
@@ -34,11 +34,12 @@ func WalkFunction(path string, info fs.FileInfo, err error) error {
 	}
 	// Check if the current path points to a regular file
 	if isDir := info.IsDir(); isDir {
-		folderID, err := fileUploader.CreateFolder(path, pathToParentIDMap[path])
-		pathToParentIDMap[path] = folderID
+		var folderID string
+		folderID, err = fileUploader.CreateFolder(path, pathToParentIDMap[path])
 		if err != nil {
 			return err
 		}
+		pathToParentIDMap[path] = folderID
 	} else if !isDir {
 		input, err := ReadFileFromPath(path)
 		if err != nil {

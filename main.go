@@ -5,6 +5,7 @@ import (
 	"godrivefileuploader/file_operations"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
+	"log"
 )
 
 const (
@@ -21,6 +22,7 @@ func main() {
 	*/
 
 	if err := handleAuthenticationFlow(); err != nil {
+		log.Fatalf("error while authentication flow, err: %v", err)
 		return
 	}
 }

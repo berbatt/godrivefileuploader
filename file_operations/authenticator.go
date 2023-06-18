@@ -22,6 +22,7 @@ func (a *DriveAuthenticator) RefreshToken() error {
 		}
 		a.Token = newToken
 	}
+	fmt.Println("Refresh Token saved successfully.")
 	return nil
 }
 
@@ -42,6 +43,7 @@ func (a *DriveAuthenticator) InitiateAuthenticationFlow() error {
 		}
 		a.Token = token
 		fmt.Println("Authorization successful.")
+		return
 	})
 
 	// Start the HTTP server

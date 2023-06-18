@@ -24,7 +24,7 @@ func (ts *TokenStorage) SaveToken(token *oauth2.Token) error {
 func (ts *TokenStorage) LoadToken() (*oauth2.Token, error) {
 	token, err := loadToken()
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
 	ts.Token = token
 	return ts.Token, nil

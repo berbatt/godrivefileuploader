@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"os"
 )
@@ -31,7 +32,9 @@ type FileUploader interface {
 	CreateFile(input []byte, fileName string, parentID string) error
 	CreateFolder(folderName, parentFolderID string) (string, error)
 	FindFolderOrFile(name, parentFolderID string) (*drive.File, error)
-	CreateOrUpdateIfNeeded(input []byte, name, parentFolderID string) error
+	UpdateFile(input []byte, fileName string) error
+	CreateOrUpdateFile(input []byte, name, parentFolderID string) error
+	CreateOrUpdateFolder(name, parentFolderID string) (string, error)
 }
 
 type DriveUploader struct {
@@ -97,7 +100,12 @@ func (d *DriveUploader) CreateFolder(folderName, parentFolderID string) (string,
 }
 
 func (d *DriveUploader) FindFolderOrFile(name, parentFolderID string) (*drive.File, error) {
-	query := fmt.Sprintf("name = '%s' and '%s' in parents and trashed = false", name, parentFolderID)
+	var query string
+	if len(parentFolderID) == 0 {
+		query = fmt.Sprintf("name = '%s' and trashed = false", name)
+	} else if len(parentFolderID) > 0 {
+		query = fmt.Sprintf("name = '%s' and '%s' in parents and trashed = false", name, parentFolderID)
+	}
 	files, err := d.client.Files.List().Q(query).Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to search for folder or file: %w", err)
@@ -110,16 +118,55 @@ func (d *DriveUploader) FindFolderOrFile(name, parentFolderID string) (*drive.Fi
 	return nil, nil
 }
 
-func (d *DriveUploader) CreateOrUpdateIfNeeded(input []byte, name, parentFolderID string) error {
-	/*
-		file, err := d.FindFolderOrFile(name, parentFolderID)
-		if err != nil {
+func (d *DriveUploader) UpdateFile(input []byte, fileID string) error {
+	// Create a media reader with the new content
+	reader := bytes.NewReader(input)
+
+	// Set the media metadata for the update
+	update := d.client.Files.Update(fileID, nil)
+	update.Media(reader, googleapi.ContentType("text/plain"))
+
+	// Perform the update
+	_, err := update.Do()
+	if err != nil {
+		return fmt.Errorf("failed to update file: %w", err)
+	}
+
+	return nil
+}
+
+func (d *DriveUploader) CreateOrUpdateFile(input []byte, name, parentFolderID string) error {
+	file, err := d.FindFolderOrFile(name, parentFolderID)
+	if err != nil {
+		return err
+	}
+
+	if file == nil {
+		// Folder or file not found, create it
+		if err = d.CreateFile(input, name, parentFolderID); err != nil {
 			return err
 		}
-
-		if file == nil {
-			// Folder or file not found, create it
-			_, err = d.CreateFolder()
-		}*/
+	} else {
+		if err = d.UpdateFile(input, file.Id); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (d *DriveUploader) CreateOrUpdateFolder(name, parentFolderID string) (string, error) {
+	folder, err := d.FindFolderOrFile(name, parentFolderID)
+	if err != nil {
+		return "", err
+	}
+
+	if folder == nil {
+		var folderID string
+		if folderID, err = d.CreateFolder(name, parentFolderID); err != nil {
+			return "", err
+		}
+		return folderID, nil
+	}
+
+	return folder.Id, nil
 }

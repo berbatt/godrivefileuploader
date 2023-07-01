@@ -36,8 +36,8 @@ func HandleFileOrFolder(path string, info fs.FileInfo, err error) error {
 	parentFolderID := pathManager.GetParentFolderID(path)
 	if isDir := info.IsDir(); isDir {
 		var folderID string
-		folderID, err = fileUploader.CreateFolder(path_manager.GetFileOrFolderNameFromPath(path), parentFolderID)
-		if err != nil {
+		folderName := path_manager.GetFileOrFolderNameFromPath(path)
+		if folderID, err = fileUploader.CreateOrUpdateFolder(folderName, parentFolderID); err != nil {
 			return err
 		}
 		pathManager.SetParentID(path, folderID)
@@ -46,7 +46,7 @@ func HandleFileOrFolder(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		return fileUploader.CreateFile(input, info.Name(), parentFolderID)
+		return fileUploader.CreateOrUpdateFile(input, info.Name(), parentFolderID)
 	}
 	return nil
 }

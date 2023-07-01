@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	PathCredentialsFile = "credentials.json"
-	PathTokenFile       = "token.json"
+	pathToken = "token.json"
 )
 
 type TokenStorage struct {
@@ -32,7 +31,7 @@ func (ts *TokenStorage) LoadToken() (*oauth2.Token, error) {
 
 func loadToken() (*oauth2.Token, error) {
 	// Open the token file
-	file, err := os.Open(PathTokenFile)
+	file, err := os.Open(pathToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "token file doesn't exist or cannot be opened")
 	}
@@ -56,7 +55,7 @@ func loadToken() (*oauth2.Token, error) {
 
 func storeToken(token *oauth2.Token) error {
 	// Create or open the token file
-	file, err := os.Create(PathTokenFile)
+	file, err := os.Create(pathToken)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create token file")
 	}

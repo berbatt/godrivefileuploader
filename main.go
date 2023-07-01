@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	pathname = "temp"
+	pathCredentialsFile = "credentials.json"
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 }
 
 func handleAuthenticationFlow() error {
-	credentialFile, err := file_operations.ReadFileFromPath(file_operations.PathCredentialsFile)
+	credentialFile, err := file_operations.ReadFileFromPath(pathCredentialsFile)
 	if err != nil {
 		return errors.Wrap(err, "Unable to read client secret file")
 	}
@@ -52,17 +52,13 @@ func handleAuthenticationFlow() error {
 		if err = driveAuthenticator.RefreshToken(); err != nil {
 			return err
 		}
-		if err = tokenStorage.SaveToken(driveAuthenticator.Token); err != nil {
-			return err
-		}
 	} else if token == nil {
 		if err = driveAuthenticator.InitiateAuthenticationFlow(); err != nil {
 			return err
 		}
-		if err = tokenStorage.SaveToken(driveAuthenticator.Token); err != nil {
-			return err
-		}
 	}
-
+	if err = tokenStorage.SaveToken(driveAuthenticator.Token); err != nil {
+		return err
+	}
 	return nil
 }

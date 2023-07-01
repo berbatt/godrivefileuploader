@@ -10,21 +10,21 @@ import (
 
 const (
 	pathCredentialsFile = "credentials.json"
+	pathname            = "temp"
 )
 
 func main() {
-	/*
-		err := file_operations.TraverseThroughDirectoryAndUploadToDrive(pathname)
-		if err != nil {
-			log.Fatalf("error while uploading the path with name: %s\nerr: %v", pathname, err)
-			return
-		}
-	*/
-
 	if err := handleAuthenticationFlow(); err != nil {
 		log.Fatalf("error while authentication flow, err: %v", err)
 		return
 	}
+
+	err := file_operations.TraverseThroughDirectoryAndUploadToDrive(pathname)
+	if err != nil {
+		log.Fatalf("error while uploading the path with name: %s\nerr: %v", pathname, err)
+		return
+	}
+
 }
 
 func handleAuthenticationFlow() error {

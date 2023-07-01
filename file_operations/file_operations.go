@@ -2,13 +2,13 @@ package file_operations
 
 import (
 	"godrivefileuploader/file_uploader"
+	"godrivefileuploader/path_manager"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 )
 
-var pathToParentIDMap = map[string]string{}
+var pathManager = path_manager.NewManager()
 
 func ReadFileFromPath(path string) ([]byte, error) {
 	// Read the file contents
@@ -33,30 +33,20 @@ func HandleFileOrFolder(path string, info fs.FileInfo, err error) error {
 		return err
 	}
 	// Check if the current path points to a regular file
+	parentFolderID := pathManager.GetParentFolderID(path)
 	if isDir := info.IsDir(); isDir {
 		var folderID string
-		folderID, err = fileUploader.CreateFolder(path, pathToParentIDMap[path])
+		folderID, err = fileUploader.CreateFolder(path_manager.GetFileOrFolderNameFromPath(path), parentFolderID)
 		if err != nil {
 			return err
 		}
-		pathToParentIDMap[path] = folderID
+		pathManager.SetParentID(path, folderID)
 	} else if !isDir {
 		input, err := ReadFileFromPath(path)
 		if err != nil {
 			return err
 		}
-		return fileUploader.UploadFileFrom(input, info.Name(), pathToParentIDMap[getRootFolderName(path)])
+		return fileUploader.CreateFile(input, info.Name(), parentFolderID)
 	}
-
 	return nil
-}
-
-func isRootFolder(path string) bool {
-	return strings.Contains(path, "/")
-}
-
-func getRootFolderName(path string) (root string) {
-	paths := strings.Split(path, "/")
-	root = paths[0]
-	return root
 }

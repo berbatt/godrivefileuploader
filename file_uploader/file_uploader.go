@@ -28,7 +28,7 @@ func GetUploader() (FileUploader, error) {
 }
 
 type FileUploader interface {
-	UploadFileFrom(input []byte, fileName string, parentID string) error
+	CreateFile(input []byte, fileName string, parentID string) error
 	CreateFolder(folderName, parentFolderID string) (string, error)
 	FindFolderOrFile(name, parentFolderID string) (*drive.File, error)
 	CreateOrUpdateIfNeeded(input []byte, name, parentFolderID string) error
@@ -62,7 +62,7 @@ func NewDefaultDriveUploader() (FileUploader, error) {
 	return NewDriveUploader(pathCredentialFile)
 }
 
-func (d *DriveUploader) UploadFileFrom(input []byte, fileName string, parentID string) error {
+func (d *DriveUploader) CreateFile(input []byte, fileName string, parentID string) error {
 	// Create a new file on Google Drive
 	file := &drive.File{
 		Name:    fileName,
@@ -111,6 +111,15 @@ func (d *DriveUploader) FindFolderOrFile(name, parentFolderID string) (*drive.Fi
 }
 
 func (d *DriveUploader) CreateOrUpdateIfNeeded(input []byte, name, parentFolderID string) error {
+	/*
+		file, err := d.FindFolderOrFile(name, parentFolderID)
+		if err != nil {
+			return err
+		}
 
+		if file == nil {
+			// Folder or file not found, create it
+			_, err = d.CreateFolder()
+		}*/
 	return nil
 }

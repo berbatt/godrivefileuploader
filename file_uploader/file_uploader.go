@@ -1,25 +1,22 @@
 package file_uploader
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	"golang.org/x/oauth2/google"
+	"godrivefileuploader/authentication"
 	"google.golang.org/api/drive/v3"
-	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
-	"os"
+	"net/http"
 )
 
-const pathCredentialFile = "credentials.json"
 const folderColorCode = "#00FF00"
 
 var uploader *FileUploader
 
 func GetUploader() (FileUploader, error) {
 	if uploader == nil {
-		u, err := NewDefaultDriveUploader()
+		u, err := NewDriveUploader()
 		if err != nil {
 			return nil, err
 		}
@@ -38,31 +35,25 @@ type FileUploader interface {
 }
 
 type DriveUploader struct {
-	client *drive.Service
+	service DriveService
 }
 
-func NewDriveUploader(pathCredentialFile string) (FileUploader, error) {
-	b, err := os.ReadFile(pathCredentialFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read client secret file")
-	}
-	config, err := google.ConfigFromJSON(b, drive.DriveFileScope)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse client secret file to config")
-	}
-	httpClient, err := getClientFromConfig(config)
+func NewDriveUploader() (FileUploader, error) {
+	authenticator, err := authentication.Get()
 	if err != nil {
 		return nil, err
 	}
-	c, err := drive.NewService(context.Background(), option.WithHTTPClient(httpClient))
+	var driveClient *http.Client
+	driveClient = authenticator.GetDriveClient()
 	if err != nil {
 		return nil, err
 	}
-	return &DriveUploader{c}, nil
-}
-
-func NewDefaultDriveUploader() (FileUploader, error) {
-	return NewDriveUploader(pathCredentialFile)
+	var s *drive.Service
+	s, err = drive.NewService(context.Background(), option.WithHTTPClient(driveClient))
+	if err != nil {
+		return nil, err
+	}
+	return &DriveUploader{service: NewDriveService(s)}, nil
 }
 
 func (d *DriveUploader) CreateFile(input []byte, fileName string, parentID string) error {
@@ -71,7 +62,7 @@ func (d *DriveUploader) CreateFile(input []byte, fileName string, parentID strin
 		Name:    fileName,
 		Parents: []string{parentID},
 	}
-	_, err := d.client.Files.Create(file).Media(bytes.NewReader(input)).Do()
+	_, err := d.service.Create(file, input)
 	if err != nil {
 		return err
 	}
@@ -91,7 +82,7 @@ func (d *DriveUploader) CreateFolder(folderName, parentFolderID string) (string,
 		FolderColorRgb: folderColorCode,
 	}
 
-	createdFolder, err := d.client.Files.Create(folder).Do()
+	createdFolder, err := d.service.Create(folder, nil)
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to create folder with name: %s error: %v", folderName, err)
 	}
@@ -100,13 +91,7 @@ func (d *DriveUploader) CreateFolder(folderName, parentFolderID string) (string,
 }
 
 func (d *DriveUploader) FindFolderOrFile(name, parentFolderID string) (*drive.File, error) {
-	var query string
-	if len(parentFolderID) == 0 {
-		query = fmt.Sprintf("name = '%s' and trashed = false", name)
-	} else if len(parentFolderID) > 0 {
-		query = fmt.Sprintf("name = '%s' and '%s' in parents and trashed = false", name, parentFolderID)
-	}
-	files, err := d.client.Files.List().Q(query).Do()
+	files, err := d.service.List(name, parentFolderID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to search for folder or file: %w", err)
 	}
@@ -119,15 +104,7 @@ func (d *DriveUploader) FindFolderOrFile(name, parentFolderID string) (*drive.Fi
 }
 
 func (d *DriveUploader) UpdateFile(input []byte, fileID string) error {
-	// Create a media reader with the new content
-	reader := bytes.NewReader(input)
-
-	// Set the media metadata for the update
-	update := d.client.Files.Update(fileID, nil)
-	update.Media(reader, googleapi.ContentType("text/plain"))
-
-	// Perform the update
-	_, err := update.Do()
+	_, err := d.service.Update(fileID, input)
 	if err != nil {
 		return fmt.Errorf("failed to update file: %w", err)
 	}

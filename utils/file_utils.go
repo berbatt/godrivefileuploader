@@ -21,10 +21,11 @@ func ReadFileFromPath(path string) ([]byte, error) {
 
 	reader := bufio.NewReader(f)
 	fileContents := make([]byte, 1024)
-	_, err = reader.Read(fileContents)
+	var size int
+	size, err = reader.Read(fileContents)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
 	}
 
-	return fileContents, err
+	return fileContents[:size], err
 }

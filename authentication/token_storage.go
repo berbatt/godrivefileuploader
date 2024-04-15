@@ -24,14 +24,13 @@ func (ts *TokenStorage) loadToken(pathTokenFile string) (*oauth2.Token, error) {
 	return ts.Token, nil
 }
 
-func (ts *TokenStorage) isTokenExists() bool {
-	return ts.Token != nil
-}
-
 func loadToken(pathTokenFile string) (*oauth2.Token, error) {
 	// Open the token file
 	file, err := os.Open(pathTokenFile)
 	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
 		return nil, errors.Wrap(err, "token file doesn't exist or cannot be opened")
 	}
 	defer func(file *os.File) {

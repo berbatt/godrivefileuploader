@@ -10,6 +10,7 @@ import (
 	"google.golang.org/api/drive/v3"
 	"log"
 	"net/http"
+	"os"
 )
 
 const (
@@ -53,15 +54,19 @@ func (a *DriveAuthenticator) ExecuteFlow(pathCredentialsFile, pathTokenFile stri
 		return errors.Wrap(err, "Unable to parse client secret file to config")
 	}
 	a.tokenStorage.Token, err = a.tokenStorage.loadToken(pathTokenFile)
+	var tokenExists = true
 	if err != nil {
-		return errors.Wrap(err, "Unable to read token from file")
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		tokenExists = false
 	}
-	if a.tokenStorage.isTokenExists() {
+	if tokenExists {
 		err = a.refreshToken()
 		if err != nil {
 			return errors.Wrap(err, "Unable to refresh token")
 		}
-	} else if !a.tokenStorage.isTokenExists() {
+	} else {
 		err = a.exchangeAuthorizationToken()
 		if err != nil {
 			return err

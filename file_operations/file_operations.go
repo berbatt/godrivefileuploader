@@ -15,9 +15,6 @@ func TraverseThroughDirectoryAndUploadToDrive(dirPath string) error {
 }
 
 func HandleFileOrFolder(path string, info fs.FileInfo, err error) error {
-	if err != nil {
-		return err
-	}
 	fileUploader, err := file_uploader.GetUploader()
 	if err != nil {
 		return err

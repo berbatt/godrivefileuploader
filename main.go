@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jessevdk/go-flags"
+	"github.com/robfig/cron"
 	"godrivefileuploader/file_operations"
-	"log"
+	"godrivefileuploader/file_uploader"
 	"os"
+	"time"
 )
 
 const (
@@ -25,6 +27,8 @@ type options struct {
 	Path   string `short:"p" long:"path" description:"Absolute path of the directory"`
 }
 
+var opts options
+
 func main() {
 	code, err := run(os.Args[1:])
 	if err != nil {
@@ -37,7 +41,6 @@ func main() {
 }
 
 func run(args []string) (exitCode, error) {
-	var opts options
 	parser := flags.NewParser(&opts, flags.Default)
 	parser.Name = appName
 	parser.Usage = "[OPTIONS] QUERY..."
@@ -52,11 +55,30 @@ func run(args []string) (exitCode, error) {
 		return exitCodeErr, errors.New("must enter a path")
 	}
 
-	err = file_operations.TraverseThroughDirectoryAndUploadToDrive(opts.Path)
+	_, err = time.ParseDuration(opts.Period)
 	if err != nil {
-		log.Fatalf("error while uploading the path with name: %s\nerr: %v", opts.Path, err)
+		return exitCodeErr, errors.New("must enter a valid period such as '1h', '2m', '3d'")
+	}
+
+	_, err = file_uploader.GetUploader()
+	if err != nil {
 		return exitCodeErr, err
 	}
 
-	return exitCodeOK, nil
+	c := cron.New()
+	// Schedule the function to run periodically
+	err = c.AddFunc(fmt.Sprintf("@every %s", opts.Period), func() {
+		fmt.Printf("Uploading files...\n")
+		err = file_operations.TraverseThroughDirectoryAndUploadToDrive(opts.Path)
+		if err != nil {
+			panic(err)
+		}
+	})
+	if err != nil {
+		return exitCodeErr, err
+	}
+	// Start the cron scheduler
+	c.Start()
+
+	select {}
 }

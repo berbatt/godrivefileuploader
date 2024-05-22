@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/pkg/errors v0.9.1
+	github.com/robfig/cron v1.2.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.16.0
 	google.golang.org/api v0.156.0

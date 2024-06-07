@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 const (
@@ -53,24 +54,20 @@ func (a *DriveAuthenticator) ExecuteFlow(pathCredentialsFile, pathTokenFile stri
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse client secret file to config")
 	}
+
 	a.tokenStorage.Token, err = a.tokenStorage.loadToken(pathTokenFile)
-	var tokenExists = true
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
-		tokenExists = false
-	}
-	if tokenExists {
-		err = a.refreshToken()
-		if err != nil {
-			return errors.Wrap(err, "Unable to refresh token")
-		}
-	} else {
 		err = a.exchangeAuthorizationToken()
 		if err != nil {
 			return err
 		}
+	}
+	err = a.refreshToken()
+	if err != nil {
+		return errors.Wrap(err, "Unable to refresh token")
 	}
 	err = a.tokenStorage.saveToken(pathTokenFile)
 	if err != nil {
@@ -113,7 +110,7 @@ func (a *DriveAuthenticator) exchangeAuthorizationToken() error {
 
 	// Set up a simple HTTP server to handle the callback
 	server = &http.Server{
-		Addr: ":8080",
+		ReadTimeout: 400 * time.Millisecond,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			code := r.URL.Query().Get("code")
 			if code == "" {
@@ -141,9 +138,8 @@ func (a *DriveAuthenticator) exchangeAuthorizationToken() error {
 		err := server.ListenAndServe()
 		if !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
-		} else {
-			log.Println("Server gracefully shutdown")
 		}
+		log.Println("Server gracefully shutdown")
 	}()
 
 	// Wait for a signal to stop the server

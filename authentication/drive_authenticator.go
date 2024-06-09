@@ -15,16 +15,18 @@ import (
 )
 
 const (
-	pathCredentialsFile = "credentials.json"
-	pathTokenFile       = "token.json"
+	pathTokenFile = "token.json"
 )
 
-var authenticator *DriveAuthenticator
+var (
+	authenticator       *DriveAuthenticator
+	PathCredentialsFile string
+)
 
 func Get() (*DriveAuthenticator, error) {
 	if authenticator == nil {
 		a := NewDriveAuthenticator()
-		err := a.ExecuteFlow(pathCredentialsFile, pathTokenFile)
+		err := a.ExecuteFlow(PathCredentialsFile, pathTokenFile)
 		if err != nil {
 			return nil, err
 		}

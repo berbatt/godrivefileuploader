@@ -1,21 +1,19 @@
-package file_operations
+package uploader
 
 import (
-	"godrivefileuploader/file_uploader"
-	"godrivefileuploader/path_manager"
-	"godrivefileuploader/utils"
 	"io/fs"
 	"path/filepath"
 )
 
-var pathManager = path_manager.NewManager()
+var pathManager = NewManager()
 
 func TraverseThroughDirectoryAndUploadToDrive(dirPath string) error {
 	return filepath.Walk(dirPath, HandleFileOrFolder)
 }
 
-func HandleFileOrFolder(path string, info fs.FileInfo, err error) error {
-	fileUploader, err := file_uploader.GetUploader()
+func HandleFileOrFolder(path string, info fs.FileInfo, _ error) (err error) {
+	var fileUploader FileUploader
+	fileUploader, err = GetUploader()
 	if err != nil {
 		return err
 	}
@@ -24,14 +22,14 @@ func HandleFileOrFolder(path string, info fs.FileInfo, err error) error {
 	var isDirectory, isFile = info.IsDir(), !info.IsDir()
 	if isDirectory {
 		var folderID string
-		folderName := path_manager.GetFileOrFolderNameFromPath(path)
+		folderName := GetFileOrFolderNameFromPath(path)
 		if folderID, err = fileUploader.CreateOrUpdateFolder(folderName, parentFolderID); err != nil {
 			return err
 		}
 		pathManager.SetParentID(path, folderID)
 	} else if isFile {
 		var input []byte
-		input, err = utils.ReadFileFromPath(path)
+		input, err = ReadFileFromPath(path)
 		if err != nil {
 			return err
 		}

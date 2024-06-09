@@ -1,4 +1,4 @@
-package file_uploader
+package uploader
 
 import (
 	"bytes"

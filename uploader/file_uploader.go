@@ -1,13 +1,11 @@
-package file_uploader
+package uploader
 
 import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	"godrivefileuploader/authentication"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
-	"net/http"
 )
 
 const folderColorCode = "#00FF00"
@@ -39,15 +37,11 @@ type DriveUploader struct {
 }
 
 func NewDriveUploader() (FileUploader, error) {
-	authenticator, err := authentication.Get()
+	authenticator, err := Get()
 	if err != nil {
 		return nil, err
 	}
-	var driveClient *http.Client
-	driveClient = authenticator.GetDriveClient()
-	if err != nil {
-		return nil, err
-	}
+	driveClient := authenticator.GetDriveClient()
 	var s *drive.Service
 	s, err = drive.NewService(context.Background(), option.WithHTTPClient(driveClient))
 	if err != nil {

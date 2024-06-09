@@ -1,4 +1,4 @@
-package path_manager
+package uploader
 
 import "strings"
 

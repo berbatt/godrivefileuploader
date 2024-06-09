@@ -1,4 +1,4 @@
-package authentication
+package uploader
 
 import (
 	"encoding/json"

@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"github.com/robfig/cron"
-	"godrivefileuploader/authentication"
-	"godrivefileuploader/file_operations"
-	"godrivefileuploader/file_uploader"
+	"godrivefileuploader/uploader"
 	"os"
 	"os/signal"
 	"syscall"
@@ -65,8 +63,8 @@ func run(args []string) (exitCode, error) {
 	if err != nil {
 		return exitCodeErr, ErrDuration
 	}
-	authentication.PathCredentialsFile = opts.CredentialsPath
-	_, err = file_uploader.GetUploader()
+	uploader.PathCredentialsFile = opts.CredentialsPath
+	_, err = uploader.GetUploader()
 	if err != nil {
 		return exitCodeErr, err
 	}
@@ -74,7 +72,7 @@ func run(args []string) (exitCode, error) {
 	// Schedule the function to run periodically
 	err = c.AddFunc(fmt.Sprintf("@every %s", opts.Period), func() {
 		fmt.Printf("Uploading files...\n")
-		err = file_operations.TraverseThroughDirectoryAndUploadToDrive(opts.Path)
+		err = uploader.TraverseThroughDirectoryAndUploadToDrive(opts.Path)
 		if err != nil {
 			panic(err)
 		}

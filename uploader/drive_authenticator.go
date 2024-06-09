@@ -1,10 +1,9 @@
-package authentication
+package uploader
 
 import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	"godrivefileuploader/utils"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
@@ -48,7 +47,7 @@ var server *http.Server
 
 func (a *DriveAuthenticator) ExecuteFlow(pathCredentialsFile, pathTokenFile string) (err error) {
 	var credentialFile []byte
-	credentialFile, err = utils.ReadFileFromPath(pathCredentialsFile)
+	credentialFile, err = ReadFileFromPath(pathCredentialsFile)
 	if err != nil {
 		return errors.Wrap(err, "Unable to read client secret file")
 	}

@@ -26,10 +26,10 @@ const (
 var ErrDuration = errors.New("must enter a valid period such as '1h', '2m', '3d'")
 
 type options struct {
-	Period          string `short:"P" long:"period" description:"Period of uploading files, such as '1m', '2h'. Default is 1 hour" default:"1h"`
-	Path            string `short:"p" long:"path" description:"Absolute path of the directory"`
-	Duration        string `short:"d" long:"duration" description:"Total duration of the uploader" default:"1h"`
-	CredentialsPath string `short:"c" long:"credentials" description:"Path to the credentials file" default:"credentials.json"`
+	Period          string `short:"P" long:"period" description:"Upload interval (e.g., '1m' for 1 minute, '2h' for 2 hours). Default is 1 hour (default: 1h)" default:"1h"`
+	Path            string `short:"p" long:"path" description:"Absolute path of the directory to upload"`
+	Duration        string `short:"d" long:"duration" description:"Total duration for the uploader to run (default: 1h)" default:"1h"`
+	CredentialsPath string `short:"c" long:"credentials" description:"Path to the credentials file (default: credentials.json)" default:"credentials.json"`
 }
 
 var opts options
